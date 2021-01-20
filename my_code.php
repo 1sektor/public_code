@@ -1,5 +1,6 @@
 <?php
    /*ExportController.php*/
+class ExportController extends BaseController{
    /**
      * @Route("/export/day_info", name="export_info_by_day", methods={"GET"})
      * @param Request $request
@@ -95,8 +96,9 @@
 
         return $response;
     }
-    
+}
     /*TariffsController.php*/
+class CabinetTariffController extends AdminBaseController{
      /** 
      * @Route("/cabinet/tariff/city/create", name="cabinet_tariff_create")
      * @param Request $request
@@ -200,4 +202,28 @@
         $forRender['formType'] = "edit";
         return $this->render("cabinet/tariff/form.html.twig",$forRender);
     }
- 
+   
+    /**
+     * @Route("/cabinet/tariff/delete/{id}", name="cabinet_tariff_delete")
+     * @param int $id
+     * @return Response
+     */
+    public function delete(int $id){
+        $tariff = $this->getDoctrine()->getRepository(TariffZones::class)
+            ->find($id);
+        $cars = $tariff->getCars();
+        $carsList = "";
+        foreach ($cars as $car){
+            $carsList .= $car->getCarNumber()."; ";
+        }
+        if($carsList != ""){
+            $this->addFlash('danger', 'Перед удалением уберите тариф с этих машин: '. $carsList);
+            return $this->redirectToRoute('cabinet_tariff');
+        }
+        $em = $this->getDoctrine()->getManager();
+        $em->remove($tariff);
+        $em->flush();
+        $this->addFlash('danger', 'Тариф маршрута '.$tariff->getRouteName().' удален');
+        return $this->redirectToRoute('cabinet_tariff');
+    }
+}
